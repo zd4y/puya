@@ -1,7 +1,7 @@
+use dialoguer::{theme::ColorfulTheme, FuzzySelect};
 use reqwest::blocking::{self, Response};
 use rss::Channel;
-use std::process::Command;
-use std::{env::args, error::Error, io::Write, process::Stdio};
+use std::error::Error;
 
 fn fetch_data() -> Response {
     blocking::get("https://nyaa.si/?page=rss&u=puyero").expect("Error fetching data")
@@ -29,7 +29,7 @@ fn get_animes() -> Result<Vec<Anime>, Box<dyn Error>> {
     Ok(animes)
 }
 
-fn get_command() -> Command {
+/* fn get_command() -> Command {
     let mut args = args();
     let program = args.nth(1).expect("missing program");
 
@@ -38,12 +38,31 @@ fn get_command() -> Command {
     command.stdin(Stdio::piped());
     command.stdout(Stdio::piped());
     command
-}
+} */
 
 fn main() -> Result<(), Box<dyn Error>> {
     let animes = get_animes()?;
+    let items: Vec<_> = animes
+        .iter()
+        .map(|anime| &anime.title)
+        .map(|title| {
+            title
+                .trim_start_matches("[PuyaSubs!] ")
+                .trim_end_matches(".mkv")
+                .replace("[ESP-ENG]", "")
+        })
+        .collect();
 
-    let mut child = get_command().spawn().expect("error executing command");
+    let selection = FuzzySelect::with_theme(&ColorfulTheme::default())
+        .items(&items)
+        .default(0)
+        .interact()?;
+
+    let selected_anime = &animes[selection];
+
+    println!("{}", selected_anime.link);
+
+    /* let mut child = get_command().spawn().expect("error executing command");
 
     let mut stdin = child.stdin.take().expect("Failed to open stdin");
     let a = animes.clone();
@@ -64,7 +83,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let anime = animes.iter().find(|a| a.title == output).expect("anime not found");
 
-    println!("{}", anime.link);
+    println!("{}", anime.link); */
 
     Ok(())
 }
