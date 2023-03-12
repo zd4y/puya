@@ -1,4 +1,4 @@
-use dialoguer::{theme::ColorfulTheme, FuzzySelect};
+use inquire::Select;
 use reqwest::blocking::{self, Response};
 use rss::Channel;
 use std::error::Error;
@@ -53,12 +53,14 @@ fn main() -> Result<(), Box<dyn Error>> {
         })
         .collect();
 
-    let selection = FuzzySelect::with_theme(&ColorfulTheme::default())
-        .items(&items)
-        .default(0)
-        .interact()?;
+    let selection = Select::new("Choose the anime", items).raw_prompt()?;
 
-    let selected_anime = &animes[selection];
+    /* let selection = FuzzySelect::with_theme(&ColorfulTheme::default())
+    .items(&items)
+    .default(0)
+    .interact()?; */
+
+    let selected_anime = &animes[selection.index];
 
     println!("{}", selected_anime.link);
 
